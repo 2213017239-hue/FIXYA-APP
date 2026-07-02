@@ -208,14 +208,11 @@
       <div class="panel">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Fecha</th><th>Servicio</th><th>Técnico</th><th>Monto</th><th>Estado</th></tr></thead>
-            <tbody>
-              <tr><td>24 jun</td><td>Reparación de fuga</td><td>Jorge R.</td><td>$820</td><td><span class="status-pill done">Completado</span></td></tr>
-              <tr><td>02 may</td><td>Instalación eléctrica</td><td>Ana M.</td><td>$1,050</td><td><span class="status-pill done">Completado</span></td></tr>
-            </tbody>
+            <thead><tr><th>Fecha</th><th>Categoría</th><th>Precio estimado</th><th>Estado</th></tr></thead>
+            <tbody id="myRequestsBody"></tbody>
           </table>
         </div>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:1rem;">Datos de ejemplo — se sincronizarán con tu historial real en cuanto conectes la tabla <code style="background:var(--surface-2);padding:.1rem .4rem;border-radius:.3rem;color:var(--accent2);">service_requests</code> en Supabase.</p>
+        <p class="tech-directory-empty" id="myRequestsEmpty" style="display:none;padding:1.4rem 0 0;">Aún no has confirmado ninguna solicitud. En cuanto lo hagas desde el simulador de arriba, va a aparecer aquí.</p>
       </div>
     </div>
   </section>
@@ -333,41 +330,16 @@
     <div class="dash-content">
 
       <div class="stats">
-        <div class="stat-card"><div class="label">Ganancias del mes</div><div class="value">$5,780</div><div class="delta">↑ 18% vs mes pasado</div></div>
-        <div class="stat-card"><div class="label">Servicios completados</div><div class="value">17</div><div class="delta">Este mes</div></div>
-        <div class="stat-card"><div class="label">Calificación promedio</div><div class="value">4.9 ★</div><div class="delta flat">Sobre 23 reseñas</div></div>
-        <div class="stat-card"><div class="label">Solicitudes activas</div><div class="value" id="statActive">3</div><div class="delta flat">Esperando tu respuesta</div></div>
+        <div class="stat-card"><div class="label">Ganancias del mes</div><div class="value" id="provEarningsMonth">$0</div><div class="delta flat" id="provEarningsSub">Aún sin servicios aceptados</div></div>
+        <div class="stat-card"><div class="label">Servicios aceptados</div><div class="value" id="provServicesMonth">0</div><div class="delta flat">Este mes</div></div>
+        <div class="stat-card"><div class="label">Trabajos en tu portafolio</div><div class="value" id="provPortfolioCount">0</div><div class="delta flat">Súbelos en "Mi Portafolio"</div></div>
+        <div class="stat-card"><div class="label">Solicitudes activas</div><div class="value" id="statActive">0</div><div class="delta flat">Aceptadas, en curso</div></div>
       </div>
 
       <div class="two-col">
         <div class="panel" id="provReqPanel">
           <div class="panel-head"><h2>Solicitudes urgentes</h2><span class="tag">Actualizado en tiempo real</span></div>
-          <div class="req-list" id="reqList">
-            <div class="req-card" data-id="1">
-              <div class="req-top">
-                <div class="req-cat"><div class="ic">🔧</div><div><strong>Fuga de agua — cocina</strong><span>Av. Masaryk, Polanco · 1.2 km</span></div></div>
-                <div class="req-price">$650–$950</div>
-              </div>
-              <div class="req-meta"><span class="urgency">Urgente · responde en 4 min</span> &nbsp;·&nbsp; Cliente: María G.</div>
-              <div class="req-actions"><button class="decline">Rechazar</button><button class="accept">Aceptar</button></div>
-            </div>
-            <div class="req-card" data-id="2">
-              <div class="req-top">
-                <div class="req-cat"><div class="ic">⚡</div><div><strong>Apagón parcial — departamento</strong><span>Condesa · 2.5 km</span></div></div>
-                <div class="req-price">$700–$1,100</div>
-              </div>
-              <div class="req-meta"><span class="urgency medium">Media · responde en 12 min</span> &nbsp;·&nbsp; Cliente: Hugo D.</div>
-              <div class="req-actions"><button class="decline">Rechazar</button><button class="accept">Aceptar</button></div>
-            </div>
-            <div class="req-card" data-id="3">
-              <div class="req-top">
-                <div class="req-cat"><div class="ic">🔧</div><div><strong>Instalación de calentador</strong><span>Santa Fe · 4.1 km</span></div></div>
-                <div class="req-price">$900–$1,300</div>
-              </div>
-              <div class="req-meta"><span class="urgency medium">Media · responde en 25 min</span> &nbsp;·&nbsp; Cliente: Andrea P.</div>
-              <div class="req-actions"><button class="decline">Rechazar</button><button class="accept">Aceptar</button></div>
-            </div>
-          </div>
+          <div class="req-list" id="reqList"></div>
           <div class="empty-state" id="emptyState" style="display:none;"><div class="ic">✅</div>Sin solicitudes pendientes por ahora. Te avisamos en cuanto llegue una.</div>
         </div>
 
@@ -419,16 +391,11 @@
         <div class="panel-head"><h2>Historial de servicios</h2></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Fecha</th><th>Servicio</th><th>Cliente</th><th>Monto</th><th>Estado</th></tr></thead>
-            <tbody>
-              <tr><td>27 jun</td><td>Reparación de fuga</td><td>Laura M.</td><td>$820</td><td><span class="status-pill done">Completado</span></td></tr>
-              <tr><td>24 jun</td><td>Instalación eléctrica</td><td>Carlos N.</td><td>$1,050</td><td><span class="status-pill done">Completado</span></td></tr>
-              <tr><td>21 jun</td><td>Revisión de calentador</td><td>Sofía R.</td><td>$700</td><td><span class="status-pill done">Completado</span></td></tr>
-              <tr><td>18 jun</td><td>Cambio de llaves</td><td>Iván T.</td><td>$0</td><td><span class="status-pill cancel">Cancelado</span></td></tr>
-              <tr><td>15 jun</td><td>Plomería general</td><td>Daniela V.</td><td>$890</td><td><span class="status-pill done">Completado</span></td></tr>
-            </tbody>
+            <thead><tr><th>Fecha</th><th>Categoría</th><th>Precio estimado</th><th>Estado</th></tr></thead>
+            <tbody id="provHistoryBody"></tbody>
           </table>
         </div>
+        <p class="tech-directory-empty" id="provHistoryEmpty" style="display:none;padding:1.4rem 0 0;">Aún no has aceptado ningún servicio. Cuando aceptes una solicitud urgente, va a aparecer aquí.</p>
       </div>
 
     </div>
@@ -609,6 +576,32 @@
   </div>
 </footer>
 
+<!-- ============================================================
+     Asistente de preguntas frecuentes (widget flotante)
+     ============================================================ -->
+<div id="chatWidget">
+  <div id="chatPanel" class="hidden">
+    <div class="chat-header">
+      <div>
+        <strong>Asistente FixYa</strong>
+        <span>Responde preguntas frecuentes</span>
+      </div>
+      <button id="chatCloseBtn" aria-label="Cerrar chat">✕</button>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-quick" id="chatQuick"></div>
+    <form class="chat-input-row" id="chatForm">
+      <input type="text" id="chatInput" placeholder="Escribe tu pregunta..." autocomplete="off" />
+      <button type="submit" aria-label="Enviar">➤</button>
+    </form>
+  </div>
+  <button id="chatToggleBtn" aria-label="Abrir chat de ayuda">
+    <span id="chatIconOpen">💬</span>
+    <span id="chatIconClose" class="hidden">✕</span>
+  </button>
+</div>
+
+<script src="assets/js/chatbot.js"></script>
 <script type="module" src="assets/js/app.js"></script>
 </body>
 </html>
