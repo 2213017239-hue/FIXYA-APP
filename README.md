@@ -103,4 +103,5 @@ fixya-app/
 
 ## Cuentas de prueba
 
-No hay cuentas de demostración con contraseña fija — cada quien crea la suya desde el botón **Crear cuenta**. Esto es intencional: así las contraseñas nunca quedan visibles en el código fuente del sitio.
+No hay cuentas de demostración con contraseña fija — cada quien crea la suya desde el botón **Crear cuenta**. Esto es intencional: así las contraseñas nunca quedan visibles en el código fuente del sitio. 
+
