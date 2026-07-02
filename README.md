@@ -18,20 +18,20 @@ Antes de conectar Supabase, la app funciona igual en **modo demo**: puedes naveg
 2. Crea un **New Project** (elige una contraseña de base de datos y guárdala).
 3. Cuando el proyecto termine de crearse, ve a **SQL Editor** → **New query**.
 4. Abre el archivo [`supabase/schema.sql`](./supabase/schema.sql) de este proyecto, copia todo su contenido, pégalo en el editor y presiona **Run**.
-   - Esto crea las tablas `profiles` y `portfolio_items`, las reglas de seguridad (Row Level Security), y el bucket de almacenamiento `portfolio` para las fotos.
+   5. Esto crea las tablas `profiles` y `portfolio_items`, las reglas de seguridad (Row Level Security), y el bucket de almacenamiento `portfolio` para las fotos.
 5. Ve a **Project Settings → API**. Ahí vas a encontrar dos datos que necesitas:
-   - **Project URL**
-   - **anon public key**
+   7. **Project URL**
+   8. **anon public key**
 
 ## 2. Conectar la app a tu proyecto
 
 1. Abre el archivo [`assets/js/config.js`](./assets/js/config.js).
 2. Reemplaza estas dos líneas con tus propios datos del paso anterior:
 
-   ```js
-   export const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
-   export const SUPABASE_ANON_KEY = 'TU-ANON-KEY-PUBLICA-AQUI';
-   ```
+```js
+export const SUPABASE_URL = 'https://TU-PROYECTO.supabase.co';
+export const SUPABASE_ANON_KEY = 'TU-ANON-KEY-PUBLICA-AQUI';
+```
 
 3. Guarda el archivo. Eso es todo — no hay más configuración ni variables de entorno que crear. La clave `anon` está pensada para ser pública (viaja al navegador de cualquier visitante); lo que protege tus datos son las reglas de seguridad que ya vienen incluidas en `schema.sql`.
 
@@ -61,9 +61,9 @@ Para volverte administrador:
 2. En Supabase, ve a **Authentication → Users** y copia el UUID de tu usuario.
 3. Ve a **SQL Editor** y corre:
 
-   ```sql
-   update public.profiles set role = 'admin' where id = 'PEGA-AQUI-TU-UUID';
-   ```
+```sql
+update public.profiles set role = 'admin' where id = 'PEGA-AQUI-TU-UUID';
+```
 
 4. Cierra sesión y vuelve a iniciar sesión en el sitio — ahora entrarás directo al dashboard de administrador.
 
@@ -92,16 +92,40 @@ fixya-app/
 - Directorio de técnicos
 - Portafolio de trabajos anteriores (subir, ver, eliminar, con fotos)
 - **Ventas reales**: cuando un cliente confirma una solicitud en el simulador, se guarda en la tabla `service_requests`, y el dashboard de Admin calcula el GMV, la comisión y las ventas por categoría a partir de esos datos reales — arranca en $0 y crece solo conforme lleguen confirmaciones de verdad.
+- **"Tus solicitudes" (cliente)**: cada cliente ve su propio historial real de solicitudes confirmadas.
+- **Panel de técnico real**: las solicitudes "sin asignar" aparecen en el panel de cualquier técnico; al darle **Aceptar**, esa solicitud queda asignada a ese técnico de verdad (columna `technician_id` en la base de datos). Las ganancias, servicios aceptados, solicitudes activas e historial del técnico se calculan a partir de sus propias solicitudes aceptadas — arrancan en $0 y crecen con cada aceptación real.
+- **Asistente de preguntas frecuentes** (botón flotante 💬 abajo a la derecha): responde por palabras clave sobre cómo funciona FixYa, precios, zonas, cómo registrarse, etc. *No es un modelo de IA generativo* — es una lista de preguntas y respuestas con búsqueda de coincidencias, para evitar exponer una clave de API en el navegador. Ver la sección "Chatbot con IA real" más abajo si quieres subir de nivel esto.
 
 🧪 **Todavía es contenido de ejemplo** (para que puedas extenderlo tú):
-- Lista de "solicitudes urgentes" del técnico
-- Historial de servicios y ganancias del panel de técnico
+- Calificación de técnicos (no hay sistema de reseñas todavía)
 - Salud del stack tecnológico y canales de adquisición del panel de Admin
 - Las metas de CAC, retención y balance oferta/demanda (estas están marcadas como "Meta" a propósito — son objetivos de negocio, no mediciones en vivo)
 
-> **Nota:** si ya habías corrido `schema.sql` antes de esta versión, vuelve a pegar el archivo completo en el SQL Editor y dale **Run** otra vez — es seguro, no borra tus datos ni tus tablas existentes, solo agrega la tabla nueva `service_requests` que faltaba.
+> **Nota:** si ya habías corrido `schema.sql` antes de esta versión, vuelve a pegar el archivo completo en el SQL Editor y dale **Run** otra vez — es seguro, no borra tus datos ni tus tablas existentes, solo agrega las políticas nuevas que faltaban (incluida la que permite a los técnicos aceptar solicitudes).
+
+## Confirmación de correo al registrarse
+
+Por defecto, Supabase le pide a cada persona confirmar su correo (con un link que le llega al email) antes de poder iniciar sesión por primera vez. Es una medida de seguridad, pero puede ser incómodo mientras estás probando la app.
+
+Para desactivarlo:
+1. En Supabase, ve a **Authentication → Sign In / Providers**.
+2. Abre **Email**.
+3. Apaga el switch **"Confirm email"**.
+4. Guarda.
+
+Puedes volver a activarlo antes de lanzar la app de verdad, para evitar cuentas falsas.
+
+## Chatbot con IA real (opcional, siguiente nivel)
+
+El asistente que viene incluido (`assets/js/chatbot.js`) es rápido, gratis, y no necesita ninguna configuración — pero solo responde preguntas que ya anticipaste en su lista de FAQ.
+
+Si más adelante quieres que responda cualquier pregunta con un modelo de IA real (como Claude), la forma segura de hacerlo es:
+1. Crear una **Supabase Edge Function** (una pequeña función que corre en el servidor de Supabase, no en el navegador).
+2. Guardar tu clave de la API de Anthropic como un "secret" de esa función — nunca en el código del sitio.
+3. Desde `chatbot.js`, en vez de buscar en `FAQ_KB`, hacer una llamada a esa Edge Function con la pregunta del usuario, y esa función es la que le habla a la API de Claude y regresa la respuesta.
+
+Es un paso más de configuración (sí requiere usar la terminal o el editor de funciones de Supabase), pero mantiene tu clave de API completamente segura. Si quieres, se puede construir en una siguiente sesión.
 
 ## Cuentas de prueba
 
-No hay cuentas de demostración con contraseña fija — cada quien crea la suya desde el botón **Crear cuenta**. Esto es intencional: así las contraseñas nunca quedan visibles en el código fuente del sitio. 
-
+No hay cuentas de demostración con contraseña fija — cada quien crea la suya desde el botón **Crear cuenta**. Esto es intencional: así las contraseñas nunca quedan visibles en el código fuente del sitio.
