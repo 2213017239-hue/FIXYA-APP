@@ -1,4 +1,4 @@
-# FixYa — Proyecto web
+FixYa — Proyecto web
 
 Sitio de FixYa listo para desplegar en **Vercel** y conectar a **Supabase**. No necesitas instalar nada ni usar la terminal: es HTML, CSS y JavaScript puro.
 
@@ -78,7 +78,8 @@ fixya-app/
 │   └── js/
 │       ├── config.js          ← aquí pegas tu URL y anon key de Supabase
 │       ├── supabase-client.js ← inicializa el SDK de Supabase
-│       ├── auth.js            ← registro, login, logout, sesión
+│       ├── auth.js            ← registro, login, logout, sesión, recuperar contraseña
+│       ├── chatbot.js         ← asistente de preguntas frecuentes
 │       └── app.js             ← toda la lógica de la interfaz
 └── supabase/
     └── schema.sql             ← esquema de base de datos, copiar y pegar en Supabase
@@ -87,21 +88,27 @@ fixya-app/
 ## Qué está conectado a Supabase y qué sigue siendo demo
 
 ✅ **Conectado de verdad** (una vez que sigas los pasos de arriba):
-- Registro e inicio de sesión
+- Registro e inicio de sesión, **y recuperación de contraseña** ("¿Olvidaste tu contraseña?" en el login)
 - Roles (cliente / técnico / admin)
-- Directorio de técnicos
+- Directorio de técnicos, con foto de perfil real, zona y especialidades que cada técnico configura
 - Portafolio de trabajos anteriores (subir, ver, eliminar, con fotos)
-- **Ventas reales**: cuando un cliente confirma una solicitud en el simulador, se guarda en la tabla `service_requests`, y el dashboard de Admin calcula el GMV, la comisión y las ventas por categoría a partir de esos datos reales — arranca en $0 y crece solo conforme lleguen confirmaciones de verdad.
+- **Ventas reales**: cuando un cliente confirma una solicitud en el simulador, se guarda en la tabla `service_requests`, y el dashboard de Admin calcula el GMV, la comisión y las ventas por categoría a partir de esos datos reales.
 - **"Tus solicitudes" (cliente)**: cada cliente ve su propio historial real de solicitudes confirmadas.
-- **Panel de técnico real**: las solicitudes "sin asignar" aparecen en el panel de cualquier técnico; al darle **Aceptar**, esa solicitud queda asignada a ese técnico de verdad (columna `technician_id` en la base de datos). Las ganancias, servicios aceptados, solicitudes activas e historial del técnico se calculan a partir de sus propias solicitudes aceptadas — arrancan en $0 y crecen con cada aceptación real.
-- **Asistente de preguntas frecuentes** (botón flotante 💬 abajo a la derecha): responde por palabras clave sobre cómo funciona FixYa, precios, zonas, cómo registrarse, etc. *No es un modelo de IA generativo* — es una lista de preguntas y respuestas con búsqueda de coincidencias, para evitar exponer una clave de API en el navegador. Ver la sección "Chatbot con IA real" más abajo si quieres subir de nivel esto.
+- **Panel de técnico real**: aceptar una solicitud urgente la asigna de verdad en la base de datos. Ganancias, servicios aceptados, solicitudes activas e historial se calculan a partir de datos reales.
+- **Mi Perfil (técnico)**: cada técnico sube su foto, elige su zona y sus especialidades — se reflejan al instante en el directorio público.
+- **Verificación de identidad**: el técnico sube una foto de su INE (o identificación oficial); el Admin la revisa y aprueba/rechaza desde su dashboard. El documento es **privado** — nunca es público, solo el propio técnico y un admin pueden verlo (bucket de Storage separado y sin acceso público).
+- **Asistente de preguntas frecuentes** (botón flotante 💬 abajo a la derecha): responde por palabras clave. No es un modelo de IA generativo — ver la sección "Chatbot con IA real" más abajo.
 
-🧪 **Todavía es contenido de ejemplo** (para que puedas extenderlo tú):
+🧪 **Todavía es contenido de ejemplo**:
 - Calificación de técnicos (no hay sistema de reseñas todavía)
-- Salud del stack tecnológico y canales de adquisición del panel de Admin
-- Las metas de CAC, retención y balance oferta/demanda (estas están marcadas como "Meta" a propósito — son objetivos de negocio, no mediciones en vivo)
+- Canales de adquisición del panel de Admin
+- Las metas de CAC, retención y balance oferta/demanda (marcadas como "Meta" a propósito)
 
-> **Nota:** si ya habías corrido `schema.sql` antes de esta versión, vuelve a pegar el archivo completo en el SQL Editor y dale **Run** otra vez — es seguro, no borra tus datos ni tus tablas existentes, solo agrega las políticas nuevas que faltaban (incluida la que permite a los técnicos aceptar solicitudes).
+> **Nota:** vuelve a pegar `supabase/schema.sql` completo en el SQL Editor y dale **Run** otra vez — es seguro, no borra tus datos ni tus tablas existentes, solo agrega las columnas, tablas y políticas nuevas que faltaban (foto de perfil, especialidades, verificación de identidad, etc.).
+
+## Si algo no aparece después de subir cambios a GitHub
+
+Cuando agregues un **archivo nuevo** (por ejemplo, la vez que se agregó `assets/js/chatbot.js`), asegúrate de arrastrarlo también al subir a GitHub — no basta con reemplazar los archivos que ya existían. Para confirmar que un archivo sí está en tu repositorio: entra a tu repo en GitHub, abre la carpeta `assets/js/`, y verifica que el archivo aparezca en la lista. Si no está, arrástralo de nuevo (usando el mismo link de "uploading an existing file" que usaste antes) y dale Commit. Después, en el navegador, haz un refresco forzado (Cmd+Shift+R) para asegurarte de que no estás viendo una versión guardada en caché.
 
 ## Confirmación de correo al registrarse
 
