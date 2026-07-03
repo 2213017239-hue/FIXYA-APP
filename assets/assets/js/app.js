@@ -2,7 +2,7 @@
 // FixYa — Lógica principal de la aplicación
 // ============================================================
 import { supabase, isSupabaseConfigured } from './supabase-client.js';
-import { initAuth, getSession, signIn, signUp, signOut } from './auth.js';
+import { initAuth, getSession, signIn, signUp, signOut, sendPasswordReset, updatePassword } from './auth.js';
 
 const ROLE_LABEL = { cliente: 'Cliente', tecnico: 'Técnico', admin: 'Admin' };
 
@@ -88,10 +88,14 @@ const authTabLogin = document.getElementById('authTabLogin');
 const authTabSignup = document.getElementById('authTabSignup');
 const loginPanel = document.getElementById('loginPanel');
 const signupPanel = document.getElementById('signupPanel');
+const resetPanel = document.getElementById('resetPanel');
 const loginForm = document.getElementById('loginForm');
 const signupForm = document.getElementById('signupForm');
+const resetForm = document.getElementById('resetForm');
 const loginError = document.getElementById('loginError');
 const signupError = document.getElementById('signupError');
+const resetError = document.getElementById('resetError');
+const resetSuccess = document.getElementById('resetSuccess');
 const authConfigNote = document.getElementById('authConfigNote');
 
 if (isSupabaseConfigured) authConfigNote.classList.remove('show');
@@ -102,19 +106,25 @@ function openAuthModal(tab){
   setAuthTab(tab || 'login');
   loginError.classList.remove('show');
   signupError.classList.remove('show');
+  resetError.classList.remove('show');
+  resetSuccess.classList.remove('show');
 }
 function closeAuthModal(){ authModal.classList.add('hidden'); }
 function setAuthTab(tab){
   const isLogin = tab === 'login';
+  const isReset = tab === 'reset';
   authTabLogin.classList.toggle('active', isLogin);
-  authTabSignup.classList.toggle('active', !isLogin);
+  authTabSignup.classList.toggle('active', !isLogin && !isReset);
   loginPanel.classList.toggle('active', isLogin);
-  signupPanel.classList.toggle('active', !isLogin);
+  signupPanel.classList.toggle('active', !isLogin && !isReset);
+  resetPanel.classList.toggle('active', isReset);
 }
 authTabLogin.addEventListener('click', () => setAuthTab('login'));
 authTabSignup.addEventListener('click', () => setAuthTab('signup'));
 authModalClose.addEventListener('click', closeAuthModal);
 authModal.addEventListener('click', (e) => { if (e.target === authModal) closeAuthModal(); });
+document.getElementById('gotoReset').addEventListener('click', () => setAuthTab('reset'));
+document.getElementById('gotoLoginFromReset').addEventListener('click', () => setAuthTab('login'));
 
 document.querySelectorAll('.js-open-login').forEach(b => b.addEventListener('click', () => openAuthModal('login')));
 document.querySelectorAll('.js-open-signup').forEach(b => b.addEventListener('click', () => openAuthModal('signup')));
@@ -148,6 +158,48 @@ signupForm.addEventListener('submit', async (e) => {
   } catch (err) {
     signupError.textContent = err.message || 'No se pudo crear la cuenta.';
     signupError.classList.add('show');
+  }
+});
+
+resetForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  resetError.classList.remove('show');
+  resetSuccess.classList.remove('show');
+  const email = document.getElementById('resetEmail').value.trim();
+  try {
+    await sendPasswordReset(email);
+    resetSuccess.classList.add('show');
+    resetForm.reset();
+  } catch (err) {
+    resetError.textContent = err.message || 'No se pudo enviar el correo de recuperación.';
+    resetError.classList.add('show');
+  }
+});
+
+// ============================================================
+// Modal: elegir nueva contraseña (llega desde el link del correo)
+// ============================================================
+const newPasswordModal = document.getElementById('newPasswordModal');
+const newPasswordForm = document.getElementById('newPasswordForm');
+const newPasswordError = document.getElementById('newPasswordError');
+
+document.addEventListener('fixya:password-recovery', () => {
+  closeAuthModal();
+  newPasswordModal.classList.remove('hidden');
+});
+
+newPasswordForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  newPasswordError.classList.remove('show');
+  const password = document.getElementById('newPasswordInput').value;
+  try {
+    await updatePassword(password);
+    newPasswordModal.classList.add('hidden');
+    newPasswordForm.reset();
+    alert('Tu contraseña se actualizó correctamente.');
+  } catch (err) {
+    newPasswordError.textContent = err.message || 'No se pudo actualizar la contraseña.';
+    newPasswordError.classList.add('show');
   }
 });
 
@@ -218,15 +270,25 @@ function showRoleView(profile){
     document.getElementById('provGreetName').textContent = `${profile.name} 👋`;
     document.getElementById('provNameLabel').textContent = profile.name;
     document.getElementById('provSpecialtyLabel').textContent = profile.specialty || 'Técnico FixYa';
-    document.getElementById('provAvatarInit').textContent = initials(profile.name);
+    const sidebarAvatar = document.getElementById('provAvatarInit');
+    if (profile.avatar_url) {
+      sidebarAvatar.style.backgroundImage = `url('${profile.avatar_url}')`;
+      sidebarAvatar.textContent = '';
+    } else {
+      sidebarAvatar.style.backgroundImage = '';
+      sidebarAvatar.textContent = initials(profile.name);
+    }
     loadMyPortfolio();
     loadUrgentRequests();
     loadTechnicianStats();
+    loadMyProfileForm();
+    loadVerificationStatus();
   }
   if (role === 'admin') {
     document.getElementById('adminNameLabel').textContent = profile.name || 'Admin';
     document.getElementById('adminAvatarInit').textContent = initials(profile.name || 'Admin');
     loadAdminSalesData();
+    loadAdminVerifications();
   }
 
   window.scrollTo(0, 0);
@@ -328,11 +390,18 @@ const pmName = document.getElementById('pmName');
 const pmMeta = document.getElementById('pmMeta');
 const pmGrid = document.getElementById('pmGrid');
 
+function techAvatarStyle(t){
+  return t.avatar_url ? `style="background-image:url('${t.avatar_url}');background-size:cover;background-position:center;"` : '';
+}
+function verifiedBadgeHTML(t){
+  return t.verified ? `<span title="Cuenta verificada" style="color:var(--accent);">✓</span>` : '';
+}
+
 function techCardHTML(t){
   return `
     <button type="button" class="tech-card js-view-tech" data-tech-id="${t.id}">
-      <div class="tech-avatar">${t.avatar_emoji || '🛠️'}</div>
-      <h3>${t.name}</h3>
+      <div class="tech-avatar" ${techAvatarStyle(t)}>${t.avatar_url ? '' : (t.avatar_emoji || '🛠️')}</div>
+      <h3>${t.name} ${verifiedBadgeHTML(t)}</h3>
       <p class="tech-specialty">${t.specialty || ''}</p>
       <div class="tech-meta-row">
         <span class="tech-rating">★ ${Number(t.rating || 5).toFixed(1)}</span>
@@ -370,8 +439,16 @@ async function openTechPortfolio(techId){
   }
   if (!tech) return;
 
-  pmAvatar.textContent = tech.avatar_emoji || '🛠️';
-  pmName.textContent = tech.name;
+  if (tech.avatar_url) {
+    pmAvatar.style.backgroundImage = `url('${tech.avatar_url}')`;
+    pmAvatar.style.backgroundSize = 'cover';
+    pmAvatar.style.backgroundPosition = 'center';
+    pmAvatar.textContent = '';
+  } else {
+    pmAvatar.style.backgroundImage = '';
+    pmAvatar.textContent = tech.avatar_emoji || '🛠️';
+  }
+  pmName.textContent = tech.name + (tech.verified ? ' ✓' : '');
   pmMeta.textContent = `${tech.specialty || ''}${tech.zone ? ' · ' + tech.zone : ''} · ★ ${Number(tech.rating || 5).toFixed(1)}`;
   pmGrid.innerHTML = jobs.length
     ? jobs.map(portfolioItemHTML).join('')
@@ -721,7 +798,161 @@ portfolioForm.addEventListener('submit', async (e) => {
 });
 
 // ============================================================
-// Dashboard de Admin: ventas reales (desde service_requests)
+// Panel de técnico: Mi Perfil (foto, zona, especialidades)
+// ============================================================
+const profileForm = document.getElementById('profileForm');
+const profileAvatarPreview = document.getElementById('profileAvatarPreview');
+const profileConfigNote = document.getElementById('profileConfigNote');
+const profileSavedNote = document.getElementById('profileSavedNote');
+const SPEC_IDS = ['spec-plomeria','spec-electricidad','spec-carpinteria','spec-cerrajeria','spec-pintura','spec-limpieza','spec-ac','spec-otro'];
+
+if (isSupabaseConfigured) profileConfigNote.classList.remove('show');
+else profileConfigNote.classList.add('show');
+
+function setProfileAvatarPreview(url, emoji){
+  if (url) {
+    profileAvatarPreview.style.backgroundImage = `url('${url}')`;
+    profileAvatarPreview.textContent = '';
+  } else {
+    profileAvatarPreview.style.backgroundImage = '';
+    profileAvatarPreview.textContent = emoji || '🛠️';
+  }
+}
+
+async function loadMyProfileForm(){
+  const { profile } = getSession();
+  if (!profile) return;
+  document.getElementById('pfName').value = profile.name || '';
+  document.getElementById('pfZone').value = profile.zone || 'Polanco';
+  const mySpecs = profile.specialties || [];
+  SPEC_IDS.forEach(id => {
+    const box = document.getElementById(id);
+    if (box) box.checked = mySpecs.includes(box.value);
+  });
+  setProfileAvatarPreview(profile.avatar_url, profile.avatar_emoji);
+}
+
+profileForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const { user } = getSession();
+  if (!user || !isSupabaseConfigured) return;
+
+  const submitBtn = profileForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Guardando…';
+
+  try {
+    const name = document.getElementById('pfName').value.trim();
+    const zone = document.getElementById('pfZone').value;
+    const specialties = SPEC_IDS
+      .map(id => document.getElementById(id))
+      .filter(box => box && box.checked)
+      .map(box => box.value);
+    const avatarFile = document.getElementById('pfAvatarFile').files[0];
+
+    const updates = { name, zone, specialties, specialty: specialties.join(' · ') };
+
+    if (avatarFile) {
+      const path = `${user.id}/${Date.now()}-${avatarFile.name}`;
+      const { error: upErr } = await supabase.storage.from('avatars').upload(path, avatarFile, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+      updates.avatar_url = pub.publicUrl;
+    }
+
+    const { error } = await supabase.from('profiles').update(updates).eq('id', user.id);
+    if (error) throw error;
+
+    if (updates.avatar_url) setProfileAvatarPreview(updates.avatar_url);
+    document.getElementById('provNameLabel').textContent = name;
+    document.getElementById('provSpecialtyLabel').textContent = updates.specialty || 'Técnico FixYa';
+    document.getElementById('provGreetName').textContent = `${name} 👋`;
+    if (updates.avatar_url) {
+      const sidebarAvatar = document.getElementById('provAvatarInit');
+      sidebarAvatar.style.backgroundImage = `url('${updates.avatar_url}')`;
+      sidebarAvatar.textContent = '';
+    }
+
+    profileSavedNote.classList.add('show');
+    setTimeout(() => profileSavedNote.classList.remove('show'), 3000);
+    renderTechDirectory();
+  } catch (err) {
+    alert('No se pudo guardar tu perfil: ' + (err.message || err));
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Guardar cambios';
+  }
+});
+
+// ============================================================
+// Panel de técnico: Verificación de identidad
+// ============================================================
+const verifyForm = document.getElementById('verifyForm');
+const verifyStatusTag = document.getElementById('verifyStatusTag');
+const verifyConfigNote = document.getElementById('verifyConfigNote');
+const verifyPendingNote = document.getElementById('verifyPendingNote');
+const verifyApprovedNote = document.getElementById('verifyApprovedNote');
+
+if (isSupabaseConfigured) verifyConfigNote.classList.remove('show');
+else verifyConfigNote.classList.add('show');
+
+async function loadVerificationStatus(){
+  const { user } = getSession();
+  if (!user || !isSupabaseConfigured) return;
+
+  const { data, error } = await supabase
+    .from('verifications').select('*').eq('technician_id', user.id)
+    .order('created_at', { ascending: false }).limit(1);
+  if (error) { console.error('[FixYa] Error al leer verificación:', error.message); return; }
+
+  const latest = (data && data[0]) || null;
+  verifyPendingNote.classList.remove('show');
+  verifyApprovedNote.classList.remove('show');
+  verifyForm.classList.remove('hidden');
+
+  if (!latest) {
+    verifyStatusTag.textContent = 'Sin verificar';
+  } else if (latest.status === 'pendiente') {
+    verifyStatusTag.textContent = 'En revisión';
+    verifyPendingNote.classList.add('show');
+    verifyForm.classList.add('hidden');
+  } else if (latest.status === 'aprobada') {
+    verifyStatusTag.textContent = '✓ Verificado';
+    verifyApprovedNote.classList.add('show');
+    verifyForm.classList.add('hidden');
+  } else {
+    verifyStatusTag.textContent = 'Rechazada — vuelve a intentar';
+  }
+}
+
+verifyForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const { user } = getSession();
+  if (!user || !isSupabaseConfigured) return;
+
+  const file = document.getElementById('pfIdFile').files[0];
+  if (!file) return;
+  const submitBtn = verifyForm.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Enviando…';
+
+  try {
+    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const { error: upErr } = await supabase.storage.from('verification-docs').upload(path, file);
+    if (upErr) throw upErr;
+    const { error } = await supabase.from('verifications').insert({
+      technician_id: user.id, document_url: path
+    });
+    if (error) throw error;
+    await loadVerificationStatus();
+  } catch (err) {
+    alert('No se pudo enviar tu documento: ' + (err.message || err));
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Enviar para verificación';
+  }
+});
+
 // ============================================================
 async function loadAdminSalesData(){
   const kpiGmv = document.getElementById('kpiGmv');
@@ -797,6 +1028,82 @@ async function loadAdminSalesData(){
     });
   });
 }
+
+// ============================================================
+// Dashboard de Admin: verificación de identidad de técnicos
+// ============================================================
+const adminVerifyList = document.getElementById('adminVerifyList');
+const adminVerifyEmpty = document.getElementById('adminVerifyEmpty');
+
+async function loadAdminVerifications(){
+  if (!isSupabaseConfigured) {
+    adminVerifyList.innerHTML = '';
+    adminVerifyEmpty.style.display = 'block';
+    return;
+  }
+  const { data, error } = await supabase
+    .from('verifications')
+    .select('*, profiles!verifications_technician_id_fkey(name, specialty, zone)')
+    .eq('status', 'pendiente')
+    .order('created_at', { ascending: true });
+
+  if (error) { console.error('[FixYa] Error al leer verificaciones:', error.message); return; }
+  const rows = data || [];
+
+  if (rows.length === 0) {
+    adminVerifyList.innerHTML = '';
+    adminVerifyEmpty.style.display = 'block';
+    return;
+  }
+  adminVerifyEmpty.style.display = 'none';
+
+  const cardsHTML = await Promise.all(rows.map(async (r) => {
+    const tech = r.profiles || {};
+    const { data: signed } = await supabase.storage.from('verification-docs').createSignedUrl(r.document_url, 300);
+    const viewLink = signed?.signedUrl
+      ? `<a href="${signed.signedUrl}" target="_blank" rel="noopener" style="color:var(--accent2);font-weight:700;">Ver documento →</a>`
+      : 'No se pudo generar el link del documento';
+    return `
+      <div class="req-card" data-id="${r.id}">
+        <div class="req-top">
+          <div class="req-cat"><div class="ic">🪪</div><div><strong>${tech.name || 'Técnico'}</strong><span>${tech.specialty || ''}${tech.zone ? ' · ' + tech.zone : ''}</span></div></div>
+        </div>
+        <div class="req-meta">${viewLink}</div>
+        <div class="req-actions">
+          <button class="decline" data-id="${r.id}" data-tech="${r.technician_id}">Rechazar</button>
+          <button class="accept" data-id="${r.id}" data-tech="${r.technician_id}">Aprobar</button>
+        </div>
+      </div>
+    `;
+  }));
+  adminVerifyList.innerHTML = cardsHTML.join('');
+}
+
+adminVerifyList.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  const techId = btn.dataset.tech;
+  const approve = btn.classList.contains('accept');
+
+  btn.disabled = true;
+  try {
+    const { error: verErr } = await supabase
+      .from('verifications')
+      .update({ status: approve ? 'aprobada' : 'rechazada', reviewed_at: new Date().toISOString() })
+      .eq('id', id);
+    if (verErr) throw verErr;
+
+    if (approve) {
+      const { error: profErr } = await supabase.from('profiles').update({ verified: true }).eq('id', techId);
+      if (profErr) throw profErr;
+    }
+    await loadAdminVerifications();
+  } catch (err) {
+    alert('No se pudo actualizar la verificación: ' + (err.message || err));
+    btn.disabled = false;
+  }
+});
 
 // ============================================================
 // Dashboard de Admin: animaciones del stack y canales (demo)

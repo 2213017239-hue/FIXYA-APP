@@ -60,6 +60,25 @@ export async function signOut() {
   notify();
 }
 
+// Envía un correo con un link para restablecer la contraseña.
+export async function sendPasswordReset(email) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase no está configurado. Edita assets/js/config.js primero.');
+  }
+  const redirectTo = window.location.origin + window.location.pathname;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
+  if (error) throw error;
+}
+
+// Se usa después de que la persona entra desde el link del correo de recuperación.
+export async function updatePassword(newPassword) {
+  if (!isSupabaseConfigured) {
+    throw new Error('Supabase no está configurado. Edita assets/js/config.js primero.');
+  }
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
+  if (error) throw error;
+}
+
 export async function initAuth() {
   if (initialized) return;
   initialized = true;
@@ -76,13 +95,16 @@ export async function initAuth() {
   }
   notify();
 
-  supabase.auth.onAuthStateChange(async (_event, session) => {
+  supabase.auth.onAuthStateChange(async (event, session) => {
     if (session) {
       currentUser = session.user;
       currentProfile = await fetchProfile(session.user.id);
     } else {
       currentUser = null;
       currentProfile = null;
+    }
+    if (event === 'PASSWORD_RECOVERY') {
+      document.dispatchEvent(new CustomEvent('fixya:password-recovery'));
     }
     notify();
   });
