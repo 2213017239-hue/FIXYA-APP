@@ -354,6 +354,13 @@ initAuth();
       openAuthModal('signup');
       return;
     }
+    const address = document.getElementById('quoteAddress').value.trim();
+    const description = document.getElementById('quoteDescription').value.trim();
+    if (!address) {
+      alert('Cuéntanos a dónde tiene que ir el técnico antes de confirmar.');
+      document.getElementById('quoteAddress').focus();
+      return;
+    }
     clearInterval(countdownInterval);
     showStage('success');
 
@@ -363,18 +370,25 @@ initAuth();
         category: selectedQuote.category,
         price_min: selectedQuote.price_min,
         price_max: selectedQuote.price_max,
+        address, description,
       });
       if (error) console.error('[FixYa] No se pudo registrar la venta:', error.message);
       else if (typeof loadMyRequests === 'function') loadMyRequests();
     }
+    document.getElementById('quoteAddress').value = '';
+    document.getElementById('quoteDescription').value = '';
   });
   document.getElementById('cancelBtn').addEventListener('click', () => {
     clearInterval(countdownInterval);
     catBtns.forEach(b => b.classList.remove('active'));
+    document.getElementById('quoteAddress').value = '';
+    document.getElementById('quoteDescription').value = '';
     showStage('placeholder');
   });
   document.getElementById('resetBtn').addEventListener('click', () => {
     catBtns.forEach(b => b.classList.remove('active'));
+    document.getElementById('quoteAddress').value = '';
+    document.getElementById('quoteDescription').value = '';
     showStage('placeholder');
   });
 })();
@@ -548,9 +562,10 @@ function urgentReqCardHTML(r){
   return `
     <div class="req-card" data-id="${r.id}">
       <div class="req-top">
-        <div class="req-cat"><div class="ic">${categoryIcon(r.category)}</div><div><strong>${r.category}</strong><span>Solicitada ${timeAgo(r.created_at)}</span></div></div>
+        <div class="req-cat"><div class="ic">${categoryIcon(r.category)}</div><div><strong>${r.category}</strong><span>${r.address ? '📍 ' + r.address : 'Sin dirección'} · Solicitada ${timeAgo(r.created_at)}</span></div></div>
         <div class="req-price">$${r.price_min}–$${r.price_max}</div>
       </div>
+      ${r.description ? `<div class="req-meta">"${r.description}"</div>` : ''}
       <div class="req-meta"><span class="urgency medium">Sin asignar · MXN, cotización del cliente</span></div>
       <div class="req-actions"><button class="decline" data-id="${r.id}">Ocultar</button><button class="accept" data-id="${r.id}">Aceptar</button></div>
     </div>
