@@ -44,6 +44,20 @@ create policy "Los usuarios editan su propio perfil"
   on public.profiles for update
   using (auth.uid() = id);
 
+-- Un admin puede editar el perfil de cualquiera (lo necesita para
+-- aprobar la verificación de identidad de un técnico).
+drop policy if exists "Un admin puede editar cualquier perfil" on public.profiles;
+create policy "Un admin puede editar cualquier perfil"
+  on public.profiles for update
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+-- Columnas nuevas: foto de perfil, varias especialidades, e insignia de
+-- verificado. Si tu tabla ya existía de una versión anterior, esto la
+-- actualiza sin borrar ningún dato.
+alter table public.profiles add column if not exists avatar_url text;
+alter table public.profiles add column if not exists specialties text[] not null default '{}';
+alter table public.profiles add column if not exists verified boolean not null default false;
+
 -- Crea automáticamente un perfil cada vez que alguien se registra
 -- (toma el nombre y el rol que se mandan desde el formulario de registro)
 create or replace function public.handle_new_user()
@@ -127,6 +141,85 @@ create policy "Técnicos borran sus propias fotos"
   );
 
 -- ============================================================
+-- STORAGE: bucket público para las fotos de perfil
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('avatars', 'avatars', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Fotos de perfil visibles públicamente" on storage.objects;
+create policy "Fotos de perfil visibles públicamente"
+  on storage.objects for select
+  using (bucket_id = 'avatars');
+
+drop policy if exists "Cada quien sube su propia foto de perfil" on storage.objects;
+create policy "Cada quien sube su propia foto de perfil"
+  on storage.objects for insert
+  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Cada quien reemplaza su propia foto de perfil" on storage.objects;
+create policy "Cada quien reemplaza su propia foto de perfil"
+  on storage.objects for update
+  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- ============================================================
+-- TABLA: verifications
+-- Verificación de identidad de los técnicos (ej. INE). El documento
+-- NUNCA es público: solo el propio técnico y un admin pueden verlo.
+-- ============================================================
+create table if not exists public.verifications (
+  id uuid primary key default gen_random_uuid(),
+  technician_id uuid not null references public.profiles(id) on delete cascade,
+  document_url text not null,
+  status text not null default 'pendiente' check (status in ('pendiente','aprobada','rechazada')),
+  created_at timestamptz not null default now(),
+  reviewed_at timestamptz
+);
+
+alter table public.verifications enable row level security;
+
+drop policy if exists "Un técnico ve sus verificaciones, admin ve todas" on public.verifications;
+create policy "Un técnico ve sus verificaciones, admin ve todas"
+  on public.verifications for select
+  using (
+    auth.uid() = technician_id
+    or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+  );
+
+drop policy if exists "Un técnico sube su propia verificación" on public.verifications;
+create policy "Un técnico sube su propia verificación"
+  on public.verifications for insert
+  with check (auth.uid() = technician_id);
+
+drop policy if exists "Solo un admin aprueba o rechaza verificaciones" on public.verifications;
+create policy "Solo un admin aprueba o rechaza verificaciones"
+  on public.verifications for update
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin'));
+
+-- ============================================================
+-- STORAGE: bucket PRIVADO para documentos de identidad (INE, etc.)
+-- ============================================================
+insert into storage.buckets (id, name, public)
+values ('verification-docs', 'verification-docs', false)
+on conflict (id) do nothing;
+
+drop policy if exists "Un técnico sube su propio documento de identidad" on storage.objects;
+create policy "Un técnico sube su propio documento de identidad"
+  on storage.objects for insert
+  with check (bucket_id = 'verification-docs' and (storage.foldername(name))[1] = auth.uid()::text);
+
+drop policy if exists "Un técnico ve su documento, admin ve todos" on storage.objects;
+create policy "Un técnico ve su documento, admin ve todos"
+  on storage.objects for select
+  using (
+    bucket_id = 'verification-docs'
+    and (
+      (storage.foldername(name))[1] = auth.uid()::text
+      or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+    )
+  );
+
+-- ============================================================
 -- CONVERTIR UN USUARIO EN ADMINISTRADOR
 -- ============================================================
 -- Por seguridad, el registro público solo permite "cliente" o "tecnico".
@@ -148,11 +241,24 @@ create table if not exists public.service_requests (
   client_id uuid not null references public.profiles(id) on delete cascade,
   technician_id uuid references public.profiles(id) on delete set null,
   category text not null,
-  status text not null default 'confirmada' check (status in ('confirmada','completada','cancelada')),
+  address text,
+  description text,
+  status text not null default 'confirmada' check (status in ('confirmada','aceptada','completada','cancelada')),
   price_min numeric not null,
   price_max numeric not null,
   created_at timestamptz not null default now()
 );
+
+-- Si la tabla ya existía de una versión anterior, agrega las columnas
+-- nuevas de dirección y descripción del problema (no borra ningún dato).
+alter table public.service_requests add column if not exists address text;
+alter table public.service_requests add column if not exists description text;
+
+-- Si la tabla ya existía de una versión anterior, actualiza la lista de
+-- estados permitidos para incluir 'aceptada' (no borra ninguna fila).
+alter table public.service_requests drop constraint if exists service_requests_status_check;
+alter table public.service_requests add constraint service_requests_status_check
+  check (status in ('confirmada','aceptada','completada','cancelada'));
 
 alter table public.service_requests enable row level security;
 
@@ -166,8 +272,27 @@ create policy "Clientes ven sus solicitudes, admin ve todas"
     or exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
   );
 
+-- Un técnico ve las solicitudes sin asignar (para poder aceptarlas)
+-- y también las que ya son suyas.
+drop policy if exists "Técnicos ven solicitudes sin asignar y las suyas" on public.service_requests;
+create policy "Técnicos ven solicitudes sin asignar y las suyas"
+  on public.service_requests for select
+  using (
+    auth.uid() = technician_id
+    or (status = 'confirmada' and technician_id is null)
+  );
+
 -- Un cliente solo puede crear solicitudes a su propio nombre
 drop policy if exists "Un cliente crea sus propias solicitudes" on public.service_requests;
 create policy "Un cliente crea sus propias solicitudes"
   on public.service_requests for insert
   with check (auth.uid() = client_id);
+
+-- Un técnico puede "aceptar" (tomar) una solicitud que todavía no
+-- tiene técnico asignado, asignándosela a sí mismo.
+drop policy if exists "Un técnico acepta una solicitud sin asignar" on public.service_requests;
+create policy "Un técnico acepta una solicitud sin asignar"
+  on public.service_requests for update
+  using (technician_id is null and status = 'confirmada')
+  with check (technician_id = auth.uid() and status = 'aceptada');
+

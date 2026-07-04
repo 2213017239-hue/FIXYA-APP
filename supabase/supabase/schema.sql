@@ -241,11 +241,18 @@ create table if not exists public.service_requests (
   client_id uuid not null references public.profiles(id) on delete cascade,
   technician_id uuid references public.profiles(id) on delete set null,
   category text not null,
+  address text,
+  description text,
   status text not null default 'confirmada' check (status in ('confirmada','aceptada','completada','cancelada')),
   price_min numeric not null,
   price_max numeric not null,
   created_at timestamptz not null default now()
 );
+
+-- Si la tabla ya existía de una versión anterior, agrega las columnas
+-- nuevas de dirección y descripción del problema (no borra ningún dato).
+alter table public.service_requests add column if not exists address text;
+alter table public.service_requests add column if not exists description text;
 
 -- Si la tabla ya existía de una versión anterior, actualiza la lista de
 -- estados permitidos para incluir 'aceptada' (no borra ninguna fila).
