@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FixYa — Tu experto del hogar, a un clic</title>
+<meta name="description" content="FixYa conecta a expertos del hogar verificados con quienes los necesitan, en menos de 60 minutos." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <nav class="nav">
+    <a href="#top" class="logo">Fix<span>Ya</span></a>
+    <div class="nav-links">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#tecnicos">Técnicos</a>
+      <a href="#zonas">Cobertura</a>
+      <a href="#confianza">Confianza</a>
+    </div>
+    <div class="nav-auth" id="navAuthArea"><!-- JS: botones de invitado o chip de usuario --></div>
+    <button class="burger" id="burgerBtn" aria-label="Abrir menú" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+  <div class="mobile-panel" id="mobilePanel">
+    <a href="#como-funciona">Cómo funciona</a>
+    <a href="#tecnicos">Técnicos</a>
+    <a href="#zonas">Cobertura</a>
+    <a href="#confianza">Confianza</a>
+    <div id="navAuthAreaMobile" style="margin-top:.8rem;"></div>
+  </div>
+</header>
+
+<!-- ============================================================
+     VISTA PÚBLICA — visible sin necesidad de crear cuenta
+     ============================================================ -->
+<main id="publicView">
+
+  <section class="hero" id="top">
+    <div class="wrap hero-grid">
+      <div>
+        <div class="badge-row">
+          <span class="badge"><span class="dot"></span> Técnicos verificados</span>
+          <span class="badge">Sin descargar app</span>
+        </div>
+        <h1>Tu experto del hogar,<br>en menos de <span class="accent">60 minutos</span></h1>
+        <p class="lead">Publica tu urgencia, recibe cotización inmediata y confirma con un técnico verificado. Sin apps, sin esperas, sin sorpresas.</p>
+        <div class="hero-ctas">
+          <a href="#solicitar" class="btn btn-primary">Solicitar un experto</a>
+          <a href="#tecnicos" class="btn btn-ghost">Ver técnicos</a>
+        </div>
+        <div class="trust-row">
+          <div class="trust-item"><strong>&lt;60 min</strong>&nbsp;respuesta promedio</div>
+          <div class="trust-item"><strong>100%</strong>&nbsp;técnicos verificados</div>
+          <div class="trust-item"><strong>$0</strong>&nbsp;costo por cotizar</div>
+        </div>
+        <p class="guest-note">Estás viendo FixYa sin necesidad de crear una cuenta. <button type="button" class="js-open-signup">Regístrate</button> cuando quieras confirmar una solicitud.</p>
+      </div>
+
+      <div class="sim-card" id="solicitar">
+        <div class="sim-head">
+          <h3>Solicita un servicio</h3>
+          <span>Cotización al instante</span>
+        </div>
+        <div class="cat-grid" id="catGrid">
+          <button class="cat-btn" data-cat="Plomería" data-min="650" data-max="950"><span class="ic">🔧</span>Plomería</button>
+          <button class="cat-btn" data-cat="Electricidad" data-min="700" data-max="1100"><span class="ic">⚡</span>Eléctrico</button>
+          <button class="cat-btn" data-cat="Carpintería" data-min="600" data-max="900"><span class="ic">🪚</span>Carpintería</button>
+          <button class="cat-btn" data-cat="Cerrajería" data-min="500" data-max="800"><span class="ic">🔑</span>Cerrajería</button>
+          <button class="cat-btn" data-cat="Pintura" data-min="900" data-max="1400"><span class="ic">🎨</span>Pintura</button>
+          <button class="cat-btn" data-cat="Limpieza" data-min="550" data-max="850"><span class="ic">🧹</span>Limpieza</button>
+          <button class="cat-btn" data-cat="A/C" data-min="750" data-max="1200"><span class="ic">❄️</span>A/C</button>
+          <button class="cat-btn" data-cat="Otro" data-min="600" data-max="1000"><span class="ic">✨</span>Otro</button>
+        </div>
+
+        <div class="sim-result">
+          <div class="sim-stage active" id="stagePlaceholder">
+            <p class="sim-placeholder">Elige una categoría arriba para ver tu cotización.</p>
+          </div>
+          <div class="sim-stage" id="stageLoading">
+            <div class="sim-loading">
+              <div class="spinner"></div>
+              <p>Calculando tu cotización…</p>
+            </div>
+          </div>
+          <div class="sim-stage" id="stageQuote">
+            <div class="quote-box">
+              <div class="quote-top">
+                <div>
+                  <span class="quote-eta" id="quoteEta">Plomería</span>
+                  <p class="quote-techs">Se envía a los técnicos disponibles de esta categoría</p>
+                </div>
+                <div class="quote-price"><span id="quotePrice">$650–$950</span><small>MXN, cotización</small></div>
+              </div>
+              <div class="field" style="margin-top:1.1rem;margin-bottom:.9rem;">
+                <label for="quoteAddress">¿A dónde va el técnico?</label>
+                <input type="text" id="quoteAddress" placeholder="Calle, número, colonia..." />
+              </div>
+              <div class="field" style="margin-bottom:0;">
+                <label for="quoteDescription">Cuéntanos qué pasó</label>
+                <textarea id="quoteDescription" rows="2" placeholder="Ej. Se rompió el tubo bajo el fregadero y sale agua..."></textarea>
+              </div>
+              <div class="quote-actions">
+                <button class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+                <button class="btn btn-primary" id="confirmBtn">Confirmar solicitud</button>
+              </div>
+            </div>
+          </div>
+          <div class="sim-stage" id="stageSuccess">
+            <div class="sim-success">
+              <div class="check-ring">✓</div>
+              <h4>¡Listo! Tu solicitud fue enviada</h4>
+              <p>Los técnicos de esta categoría ya pueden verla y aceptarla. Revisa "Tus solicitudes" para ver el avance.</p>
+              <button class="sim-reset" id="resetBtn">Probar otra categoría →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="como-funciona">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Por qué FixYa</span>
+          <h2>Hecho para resolver, no para esperar</h2>
+          <p>Diseñado para quien no tiene tiempo de comparar diez opciones cuando algo se rompe en casa.</p>
+        </div>
+      </div>
+      <div class="benefits">
+        <div class="benefit-card">
+          <div class="benefit-ic">⏱️</div>
+          <h3>Respuesta en menos de 60 minutos</h3>
+          <p>Tu solicitud llega a la red de técnicos disponibles más cercana al instante. Sin llamadas, sin filas de espera.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-ic">💬</div>
+          <h3>Cotización antes de confirmar</h3>
+          <p>Ves el precio estimado del servicio antes de aceptar. Tú decides si avanzar, sin compromisos ocultos.</p>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-ic">🛡️</div>
+          <h3>Técnicos verificados</h3>
+          <p>Antecedentes revisados y validación de oficio. El profesional que llega a tu puerta ya fue evaluado por FixYa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="categorias">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">La diferencia</span>
+          <h2>FixYa frente a las opciones tradicionales</h2>
+        </div>
+      </div>
+      <div class="compare">
+        <div class="compare-grid">
+          <div class="compare-col rival">
+            <h3>✕ Métodos tradicionales</h3>
+            <ul class="compare-list">
+              <li><span class="mk">✕</span>Buscar recomendaciones por WhatsApp o grupos vecinales</li>
+              <li><span class="mk">✕</span>Sin certeza de cuándo llegará el técnico</li>
+              <li><span class="mk">✕</span>Precio se negocia hasta que el técnico ya está en tu casa</li>
+              <li><span class="mk">✕</span>Sin forma de verificar antecedentes ni trabajos anteriores</li>
+            </ul>
+          </div>
+          <div class="compare-col fixya">
+            <h3>✓ FixYa</h3>
+            <ul class="compare-list">
+              <li><span class="mk">✓</span>Solicitud en segundos, sin descargar ninguna app</li>
+              <li><span class="mk">✓</span>Respuesta y tiempo de llegada estimados desde el inicio</li>
+              <li><span class="mk">✓</span>Cotización clara antes de confirmar el servicio</li>
+              <li><span class="mk">✓</span>Perfil público con trabajos anteriores de cada técnico</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Directorio de técnicos con su portafolio ── -->
+  <section id="tecnicos">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Confianza verificable</span>
+          <h2>Conoce a nuestros técnicos</h2>
+          <p>Cada perfil muestra su especialidad, calificación y trabajos anteriores. Toca una tarjeta para ver su portafolio completo.</p>
+        </div>
+      </div>
+      <div class="tech-grid" id="techGrid">
+        <p class="tech-directory-empty">Cargando técnicos…</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Solo visible para clientes con sesión iniciada ── -->
+  <section id="mis-solicitudes" class="hidden">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Tu cuenta</span>
+          <h2>Tus solicitudes</h2>
+          <p>Historial de servicios que has pedido en FixYa.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Categoría</th><th>Precio estimado</th><th>Estado</th></tr></thead>
+            <tbody id="myRequestsBody"></tbody>
+          </table>
+        </div>
+        <p class="tech-directory-empty" id="myRequestsEmpty" style="display:none;padding:1.4rem 0 0;">Aún no has confirmado ninguna solicitud. En cuanto lo hagas desde el simulador de arriba, va a aparecer aquí.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="zonas">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Cobertura</span>
+          <h2>Hecho para tu zona y tu ritmo de vida</h2>
+        </div>
+      </div>
+      <div class="zone-card">
+        <div>
+          <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:.4rem;">Cobertura activa en zonas premium de la ciudad</h3>
+          <p style="color:var(--muted); font-size:.9rem;">Concentramos la red de técnicos donde la demanda es más alta, para garantizar tiempos de respuesta cortos.</p>
+          <div class="zone-chips">
+            <span class="chip">📍 Polanco</span>
+            <span class="chip">📍 Masaryk</span>
+            <span class="chip">📍 Santa Fe</span>
+            <span class="chip">📍 Condesa</span>
+          </div>
+        </div>
+        <div class="audience-list">
+          <div class="audience-item">
+            <span class="ic">💼</span>
+            <div><h4>Profesionistas con poco tiempo</h4><p>Resuelve sin pausar tu día de trabajo.</p></div>
+          </div>
+          <div class="audience-item">
+            <span class="ic">📦</span>
+            <div><h4>Recién mudados</h4><p>Arregla y equipa tu nuevo hogar sin buscar referencias desde cero.</p></div>
+          </div>
+          <div class="audience-item">
+            <span class="ic">🔑</span>
+            <div><h4>Arrendadores</h4><p>Mantén tus propiedades en orden sin estar presente.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="confianza">
+    <div class="wrap">
+      <div class="section-head">
+        <div>
+          <span class="eyebrow">Confianza</span>
+          <h2>Lo que dicen quienes ya resolvieron con FixYa</h2>
+        </div>
+      </div>
+      <div class="testimonials">
+        <div class="t-card">
+          <div class="t-stars">★★★★★</div>
+          <p>"Se rompió el calentador un domingo y en 40 minutos ya tenía un técnico en casa. No lo esperaba tan rápido."</p>
+          <div class="t-author"><div class="t-avatar">F</div><div><strong>Felipe R.</strong><span>Condesa</span></div></div>
+        </div>
+        <div class="t-card">
+          <div class="t-stars">★★★★★</div>
+          <p>"Vi el precio antes de confirmar, eso me dio confianza. Nada de sorpresas al final."</p>
+          <div class="t-author"><div class="t-avatar">M</div><div><strong>Mariana T.</strong><span>Santa Fe</span></div></div>
+        </div>
+        <div class="t-card">
+          <div class="t-stars">★★★★★</div>
+          <p>"Pude ver los trabajos anteriores del técnico antes de que llegara. Eso ya no lo encuentras en ningún grupo de WhatsApp."</p>
+          <div class="t-author"><div class="t-avatar">D</div><div><strong>David L.</strong><span>Polanco</span></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="cta-band">
+        <span class="eyebrow" style="justify-content:center;">El siguiente paso</span>
+        <h2>Hagamos que tu próxima urgencia<br>no tenga que esperar</h2>
+        <p>Sin apps, sin compromisos. Solo cotiza y decide.</p>
+        <button type="button" class="btn btn-primary js-open-signup">Crear una cuenta gratis</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ============================================================
+     PANEL DE TÉCNICO — solo visible con sesión de rol "tecnico"
+     ============================================================ -->
+<div id="providerView" class="dashboard-shell hidden">
+  <aside class="sidebar">
+    <div class="logo">Fix<span>Ya</span></div>
+    <nav class="side-nav">
+      <a class="side-link active" href="#provTop"><span class="ic">📊</span>Panel</a>
+      <a class="side-link" href="#provReqPanel"><span class="ic">🔔</span>Solicitudes</a>
+      <a class="side-link" href="#provPortfolioPanel"><span class="ic">🖼️</span>Mi Portafolio</a>
+      <a class="side-link" href="#provEarningsPanel"><span class="ic">💰</span>Ganancias</a>
+      <a class="side-link" href="#provHistoryPanel"><span class="ic">📜</span>Historial</a>
+      <a class="side-link" href="#provProfilePanel"><span class="ic">👤</span>Mi Perfil</a>
+      <a class="side-link" href="#provVerifyPanel"><span class="ic">🪪</span>Verificación</a>
+    </nav>
+    <div class="side-foot">
+      <div class="avatar" id="provAvatarInit" style="background-size:cover;background-position:center;">T</div>
+      <div><strong id="provNameLabel">Técnico</strong><span id="provSpecialtyLabel">FixYa</span></div>
+      <button class="logout-link js-logout">Salir</button>
+    </div>
+  </aside>
+
+  <div class="dash-main" id="provTop">
+    <header class="topbar">
+      <div>
+        <h1>Hola <span id="provGreetName">👋</span></h1>
+        <p>Tienes <span id="reqCountTop">3</span> solicitudes esperando respuesta</p>
+      </div>
+      <button class="status-toggle online" id="statusToggle">
+        <span id="statusLabel">Disponible</span>
+        <span class="switch on" id="statusSwitch"></span>
+      </button>
+    </header>
+
+    <div class="dash-content">
+
+      <div class="stats">
+        <div class="stat-card"><div class="label">Ganancias del mes</div><div class="value" id="provEarningsMonth">$0</div><div class="delta flat" id="provEarningsSub">Aún sin servicios aceptados</div></div>
+        <div class="stat-card"><div class="label">Servicios aceptados</div><div class="value" id="provServicesMonth">0</div><div class="delta flat">Este mes</div></div>
+        <div class="stat-card"><div class="label">Trabajos en tu portafolio</div><div class="value" id="provPortfolioCount">0</div><div class="delta flat">Súbelos en "Mi Portafolio"</div></div>
+        <div class="stat-card"><div class="label">Solicitudes activas</div><div class="value" id="statActive">0</div><div class="delta flat">Aceptadas, en curso</div></div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel" id="provReqPanel">
+          <div class="panel-head"><h2>Solicitudes urgentes</h2><span class="tag">Actualizado en tiempo real</span></div>
+          <div class="req-list" id="reqList"></div>
+          <div class="empty-state" id="emptyState" style="display:none;"><div class="ic">✅</div>Sin solicitudes pendientes por ahora. Te avisamos en cuanto llegue una.</div>
+        </div>
+
+        <div class="panel" id="provEarningsPanel">
+          <div class="panel-head"><h2>Calculadora de ganancias</h2></div>
+          <div class="calc-row"><label>Servicios por semana <b id="svcVal">5</b></label><input type="range" min="1" max="20" value="5" id="svcSlider" /></div>
+          <div class="calc-breakdown">
+            <div class="calc-line"><span>Ticket promedio</span><span>$800 MXN</span></div>
+            <div class="calc-line"><span>Servicios al mes</span><span id="calcMonthly">20</span></div>
+            <div class="calc-line"><span>Ingreso bruto</span><span id="calcGross">$16,000</span></div>
+            <div class="calc-line neg"><span>Comisión FixYa (15%)</span><span id="calcFee">-$2,400</span></div>
+            <div class="calc-line total"><span>Ganancia neta estimada</span><span id="calcNet">$13,600</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Mi Portafolio: subir trabajos anteriores ── -->
+      <div class="panel" id="provPortfolioPanel">
+        <div class="panel-head">
+          <h2>Mi Portafolio</h2>
+          <span class="tag" id="portfolioModeTag">Modo demo</span>
+        </div>
+        <div class="form-note" id="portfolioConfigNote">Conecta Supabase para guardar tus trabajos de forma permanente. Por ahora, lo que subas aquí solo se ve durante esta sesión.</div>
+        <form id="portfolioForm">
+          <div class="form-row">
+            <div class="field"><label for="pfTitle">Título del trabajo</label><input type="text" id="pfTitle" placeholder="Ej. Instalación de calentador" required /></div>
+            <div class="field">
+              <label for="pfCategory">Categoría</label>
+              <select id="pfCategory" required>
+                <option value="Plomería">Plomería</option>
+                <option value="Electricidad">Electricidad</option>
+                <option value="Carpintería">Carpintería</option>
+                <option value="Cerrajería">Cerrajería</option>
+                <option value="Pintura">Pintura</option>
+                <option value="Limpieza">Limpieza</option>
+                <option value="A/C">A/C</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label for="pfDesc">Descripción</label><textarea id="pfDesc" rows="2" placeholder="Cuéntale al cliente qué hiciste..."></textarea></div>
+          <div class="field"><label for="pfPhoto">Foto del trabajo (opcional)</label><input type="file" id="pfPhoto" accept="image/*" /></div>
+          <button type="submit" class="btn btn-primary">Subir trabajo</button>
+        </form>
+        <div class="portfolio-grid" id="myPortfolioGrid" style="margin-top:1.5rem;"></div>
+      </div>
+
+      <div class="panel" id="provHistoryPanel">
+        <div class="panel-head"><h2>Historial de servicios</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Categoría</th><th>Precio estimado</th><th>Estado</th></tr></thead>
+            <tbody id="provHistoryBody"></tbody>
+          </table>
+        </div>
+        <p class="tech-directory-empty" id="provHistoryEmpty" style="display:none;padding:1.4rem 0 0;">Aún no has aceptado ningún servicio. Cuando aceptes una solicitud urgente, va a aparecer aquí.</p>
+      </div>
+
+      <!-- ── Mi Perfil: foto, zona y especialidades ── -->
+      <div class="panel" id="provProfilePanel">
+        <div class="panel-head"><h2>Mi Perfil</h2><span class="tag">Visible en el directorio público</span></div>
+        <div class="form-note" id="profileConfigNote">Conecta Supabase para poder guardar los cambios de tu perfil.</div>
+        <div class="form-note" id="profileSavedNote">Perfil actualizado ✓</div>
+        <form id="profileForm">
+          <div class="field">
+            <label for="pfAvatarFile">Foto de perfil</label>
+            <div style="display:flex;align-items:center;gap:1rem;">
+              <div class="tech-avatar" id="profileAvatarPreview" style="margin-bottom:0;flex-shrink:0;background-size:cover;background-position:center;">🛠️</div>
+              <input type="file" id="pfAvatarFile" accept="image/*" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label for="pfName">Nombre</label><input type="text" id="pfName" required /></div>
+            <div class="field">
+              <label for="pfZone">Zona donde trabajas</label>
+              <select id="pfZone">
+                <option value="Polanco">Polanco</option>
+                <option value="Masaryk">Masaryk</option>
+                <option value="Santa Fe">Santa Fe</option>
+                <option value="Condesa">Condesa</option>
+                <option value="Otra zona">Otra zona</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label>Especialidades (elige todas las que apliquen)</label>
+            <div class="role-choice" id="pfSpecialties" style="flex-wrap:wrap;">
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Plomería" id="spec-plomeria" /><label for="spec-plomeria"><span class="ic">🔧</span>Plomería</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Electricidad" id="spec-electricidad" /><label for="spec-electricidad"><span class="ic">⚡</span>Eléctrico</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Carpintería" id="spec-carpinteria" /><label for="spec-carpinteria"><span class="ic">🪚</span>Carpintería</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Cerrajería" id="spec-cerrajeria" /><label for="spec-cerrajeria"><span class="ic">🔑</span>Cerrajería</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Pintura" id="spec-pintura" /><label for="spec-pintura"><span class="ic">🎨</span>Pintura</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Limpieza" id="spec-limpieza" /><label for="spec-limpieza"><span class="ic">🧹</span>Limpieza</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="A/C" id="spec-ac" /><label for="spec-ac"><span class="ic">❄️</span>A/C</label></div>
+              <div class="role-option" style="flex:0 0 auto;min-width:90px;"><input type="checkbox" value="Otro" id="spec-otro" /><label for="spec-otro"><span class="ic">✨</span>Otro</label></div>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Guardar cambios</button>
+        </form>
+      </div>
+
+      <!-- ── Verificación de identidad ── -->
+      <div class="panel" id="provVerifyPanel">
+        <div class="panel-head"><h2>Verificación de identidad</h2><span class="tag" id="verifyStatusTag">Sin verificar</span></div>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:1.1rem;line-height:1.6;">Sube una foto de tu INE (u otra identificación oficial) para verificar tu cuenta. Este documento es privado — solo tú y el equipo de FixYa pueden verlo, nunca aparece en tu perfil público.</p>
+        <div class="form-note" id="verifyConfigNote">Conecta Supabase para poder subir tu documento de verificación.</div>
+        <div id="verifyPendingNote" class="form-note" style="border-color:rgba(var(--accent2-rgb),.3);color:var(--accent2);background:rgba(var(--accent2-rgb),.1);">Tu documento está en revisión. Te avisamos en cuanto el equipo de FixYa lo confirme.</div>
+        <div id="verifyApprovedNote" class="form-note" style="border-color:rgba(var(--accent-rgb),.3);color:var(--accent);background:rgba(var(--accent-rgb),.1);">✓ Tu cuenta está verificada.</div>
+        <form id="verifyForm">
+          <div class="field"><label for="pfIdFile">Foto de tu identificación oficial (INE u otra)</label><input type="file" id="pfIdFile" accept="image/*" required /></div>
+          <button type="submit" class="btn btn-primary">Enviar para verificación</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>
+<nav class="bottom-nav" id="providerBottomNav">
+  <a class="active" href="#provTop"><span class="ic">📊</span>Panel</a>
+  <a href="#provReqPanel"><span class="ic">🔔</span>Solicitudes</a>
+  <a href="#provPortfolioPanel"><span class="ic">🖼️</span>Portafolio</a>
+  <a href="#provEarningsPanel"><span class="ic">💰</span>Ganancias</a>
+</nav>
+
+<!-- ============================================================
+     DASHBOARD ADMIN — solo visible con sesión de rol "admin"
+     ============================================================ -->
+<div id="adminView" class="dashboard-shell hidden">
+  <aside class="sidebar">
+    <div class="logo">Fix<span>Ya</span></div>
+    <div class="logo-sub">Admin</div>
+    <nav class="side-nav">
+      <a class="side-link active" href="#adminTop"><span class="ic">📊</span>Resumen</a>
+      <a class="side-link" href="#adminFinancePanel"><span class="ic">💵</span>Finanzas</a>
+      <a class="side-link" href="#adminStackPanel"><span class="ic">🖥️</span>Stack tecnológico</a>
+      <a class="side-link" href="#adminChannelsPanel"><span class="ic">📈</span>Adquisición</a>
+      <a class="side-link" href="#adminVerifyPanel"><span class="ic">🪪</span>Verificación</a>
+      <a class="side-link" href="#tecnicos"><span class="ic">🛠️</span>Técnicos</a>
+    </nav>
+    <div class="side-foot">
+      <div class="avatar" id="adminAvatarInit">A</div>
+      <div><strong id="adminNameLabel">Admin</strong><span>Operación general</span></div>
+      <button class="logout-link js-logout">Salir</button>
+    </div>
+  </aside>
+
+  <div class="dash-main" id="adminTop">
+    <header class="topbar">
+      <div><h1>Dashboard de operación</h1><p>Estado del negocio en tiempo real</p></div>
+    </header>
+
+    <div class="dash-content">
+
+      <div class="kpis">
+        <div class="stat-card"><div class="label">GMV real</div><div class="value" id="kpiGmv">$0 <span style="font-size:.8rem;color:var(--muted);">MXN</span></div><div class="sub" id="kpiGmvSub">0 servicios confirmados</div></div>
+        <div class="stat-card"><div class="label">Ingreso FixYa (comisión 15%)</div><div class="value accent2" id="kpiCommission">$0 MXN</div><div class="sub">Sobre el GMV real</div></div>
+        <div class="stat-card"><div class="label">CAC objetivo</div><div class="value">&lt;$150 MXN</div><div class="sub">Meta · prioridad orgánico y referidos</div></div>
+        <div class="stat-card"><div class="label">Retención (2do servicio)</div><div class="value accent2">40%</div><div class="sub">Meta dentro de 90 días</div></div>
+        <div class="stat-card"><div class="label">Balance oferta/demanda</div><div class="value">1 : 15</div><div class="sub">Meta · técnico activo por clientes</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Ventas reales por categoría</h2><span class="tag">Datos en vivo desde Supabase</span></div>
+        <div class="chart chart-dynamic" id="realSalesChart"></div>
+        <p class="tech-directory-empty" id="realSalesEmpty">Aún no hay ventas registradas. En cuanto un cliente confirme una solicitud desde el simulador, va a aparecer aquí automáticamente — sin que tengas que tocar nada.</p>
+      </div>
+
+      <div class="two-col">
+        <div class="panel" id="adminStackPanel">
+          <div class="panel-head"><h2>Salud del stack tecnológico</h2><span class="tag">Monitoreo en vivo</span></div>
+          <div class="stack-list">
+            <div class="stack-item"><div class="stack-ic">🗄️</div><div class="stack-info"><strong>Supabase</strong><span>Base de datos y autenticación</span></div><div class="uptime-track"><div class="uptime-fill" style="width:99.9%;"></div></div><div class="stack-status"><span class="pulse-dot"></span>Operativo</div></div>
+            <div class="stack-item"><div class="stack-ic">▲</div><div class="stack-info"><strong>Vercel</strong><span>Hosting y despliegue</span></div><div class="uptime-track"><div class="uptime-fill" style="width:100%;"></div></div><div class="stack-status"><span class="pulse-dot"></span>Operativo</div></div>
+          </div>
+        </div>
+
+        <div class="panel" id="adminFinancePanel">
+          <div class="panel-head"><h2>Costos tecnológicos</h2></div>
+          <table>
+            <thead><tr><th>Herramienta</th><th>USD/mes</th></tr></thead>
+            <tbody>
+              <tr><td>nas.io</td><td>$30</td></tr>
+              <tr class="total" style="font-weight:800;color:var(--accent);"><td>Total mensual</td><td>~$30</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:.76rem;color:var(--muted);margin-top:.9rem;">Vercel y Supabase se usan en su plan gratuito por ahora — sin costo mensual.</p>
+        </div>
+      </div>
+
+      <div class="panel" id="adminChannelsPanel">
+        <div class="panel-head"><h2>Rendimiento por canal de adquisición</h2><span class="tag">% de clientes nuevos</span></div>
+        <div class="channel-list">
+          <div class="channel-row"><div class="channel-name">nas.io<span>Comunidades digitales</span></div><div class="channel-track"><div class="channel-fill" data-w="34" style="background:var(--accent);"></div></div><div class="channel-pct">34%</div></div>
+          <div class="channel-row"><div class="channel-name">Alianzas inmobiliarias<span>Mudanzas y entregas</span></div><div class="channel-track"><div class="channel-fill" data-w="26" style="background:var(--accent2);"></div></div><div class="channel-pct">26%</div></div>
+          <div class="channel-row"><div class="channel-name">Google Ads (SEM)<span>Búsqueda de intención alta</span></div><div class="channel-track"><div class="channel-fill" data-w="20" style="background:var(--accent2);"></div></div><div class="channel-pct">20%</div></div>
+          <div class="channel-row"><div class="channel-name">Instagram<span>Contenido orgánico + ads</span></div><div class="channel-track"><div class="channel-fill" data-w="13" style="background:var(--muted);"></div></div><div class="channel-pct">13%</div></div>
+          <div class="channel-row"><div class="channel-name">TikTok<span>Contenido orgánico</span></div><div class="channel-track"><div class="channel-fill" data-w="7" style="background:var(--muted);"></div></div><div class="channel-pct">7%</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h2>Balance oferta / demanda</h2></div>
+        <div class="balance-wrap">
+          <div class="balance-ring"><span>1:15</span></div>
+          <div class="balance-text"><p>Por cada técnico activo hay 15 clientes potenciales en su categoría de servicio. Mantener este balance es clave para sostener la promesa de respuesta en menos de 60 minutos.</p></div>
+        </div>
+      </div>
+
+      <!-- ── Verificación de técnicos ── -->
+      <div class="panel" id="adminVerifyPanel">
+        <div class="panel-head"><h2>Verificación de técnicos</h2><span class="tag">Documentos de identidad — solo tú los ves</span></div>
+        <div class="req-list" id="adminVerifyList"></div>
+        <p class="tech-directory-empty" id="adminVerifyEmpty" style="display:none;">No hay solicitudes de verificación pendientes por ahora.</p>
+      </div>
+
+    </div>
+    <footer class="site-footer"><div class="wrap"><p style="font-size:.78rem;color:var(--muted);">FixYa · Dashboard interno de administración — datos de demostración</p></div></footer>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Iniciar sesión / Crear cuenta
+     ============================================================ -->
+<div class="modal-overlay hidden" id="authModal">
+  <div class="modal modal-sm">
+    <button class="modal-close" id="authModalClose" aria-label="Cerrar">✕</button>
+    <div class="auth-logo">Fix<span>Ya</span></div>
+    <p class="auth-sub">Accede a tu cuenta o crea una nueva</p>
+
+    <div class="form-note" id="authConfigNote">Este proyecto aún no está conectado a Supabase. Puedes explorar la demo, pero el registro real se activará cuando edites <code style="background:var(--surface-2);padding:.1rem .35rem;border-radius:.3rem;">assets/js/config.js</code>.</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="authTabLogin" type="button">Iniciar sesión</button>
+      <button class="auth-tab" id="authTabSignup" type="button">Crear cuenta</button>
+    </div>
+
+    <div class="auth-panel active" id="loginPanel">
+      <div class="form-error" id="loginError"></div>
+      <form id="loginForm">
+        <div class="field"><label for="loginEmail">Correo</label><input type="email" id="loginEmail" autocomplete="email" required /></div>
+        <div class="field"><label for="loginPassword">Contraseña</label><input type="password" id="loginPassword" autocomplete="current-password" required /></div>
+        <button type="submit" class="btn btn-primary btn-block">Entrar</button>
+      </form>
+      <p class="auth-switch"><button type="button" id="gotoReset">¿Olvidaste tu contraseña?</button></p>
+    </div>
+
+    <div class="auth-panel" id="signupPanel">
+      <div class="form-error" id="signupError"></div>
+      <form id="signupForm">
+        <div class="role-choice">
+          <div class="role-option">
+            <input type="radio" name="signupRole" id="roleCliente" value="cliente" checked />
+            <label for="roleCliente"><span class="ic">🙋</span>Soy cliente</label>
+          </div>
+          <div class="role-option">
+            <input type="radio" name="signupRole" id="roleTecnico" value="tecnico" />
+            <label for="roleTecnico"><span class="ic">🛠️</span>Soy técnico</label>
+          </div>
+        </div>
+        <div class="field"><label for="signupName">Nombre</label><input type="text" id="signupName" autocomplete="name" required /></div>
+        <div class="field"><label for="signupEmail">Correo</label><input type="email" id="signupEmail" autocomplete="email" required /></div>
+        <div class="field"><label for="signupPassword">Contraseña</label><input type="password" id="signupPassword" autocomplete="new-password" minlength="6" required /></div>
+        <button type="submit" class="btn btn-primary btn-block">Crear cuenta</button>
+      </form>
+    </div>
+
+    <div class="auth-panel" id="resetPanel">
+      <p class="auth-sub" style="margin-bottom:1.2rem;">Te mandamos un link a tu correo para elegir una contraseña nueva.</p>
+      <div class="form-error" id="resetError"></div>
+      <div class="form-note" id="resetSuccess">Listo — revisa tu correo (y spam) y sigue el link para elegir tu nueva contraseña.</div>
+      <form id="resetForm">
+        <div class="field"><label for="resetEmail">Correo</label><input type="email" id="resetEmail" autocomplete="email" required /></div>
+        <button type="submit" class="btn btn-primary btn-block">Enviar link de recuperación</button>
+      </form>
+      <p class="auth-switch"><button type="button" id="gotoLoginFromReset">← Volver a iniciar sesión</button></p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Elegir nueva contraseña (tras entrar desde el correo)
+     ============================================================ -->
+<div class="modal-overlay hidden" id="newPasswordModal">
+  <div class="modal modal-sm">
+    <div class="auth-logo">Fix<span>Ya</span></div>
+    <p class="auth-sub">Elige tu nueva contraseña</p>
+    <div class="form-error" id="newPasswordError"></div>
+    <form id="newPasswordForm">
+      <div class="field"><label for="newPasswordInput">Nueva contraseña</label><input type="password" id="newPasswordInput" autocomplete="new-password" minlength="6" required /></div>
+      <button type="submit" class="btn btn-primary btn-block">Guardar contraseña</button>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: Portafolio de un técnico
+     ============================================================ -->
+<div class="modal-overlay hidden" id="portfolioModal">
+  <div class="modal modal-lg">
+    <button class="modal-close" id="portfolioModalClose" aria-label="Cerrar">✕</button>
+    <div class="portfolio-modal-head">
+      <div class="tech-avatar" id="pmAvatar">🔧</div>
+      <div>
+        <h3 id="pmName">—</h3>
+        <p id="pmMeta">—</p>
+      </div>
+    </div>
+    <div class="portfolio-grid" id="pmGrid"></div>
+  </div>
+</div>
+
+<footer class="site-footer" id="publicFooter">
+  <div class="wrap foot-row">
+    <p>© 2026 FixYa · Tu experto del hogar, a un clic</p>
+    <div class="foot-links">
+      <a href="#tecnicos">Técnicos</a>
+      <a href="#zonas">Cobertura</a>
+      <a href="#confianza">Confianza</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ============================================================
+     Asistente de preguntas frecuentes (widget flotante)
+     ============================================================ -->
+<div id="chatWidget">
+  <div id="chatPanel" class="hidden">
+    <div class="chat-header">
+      <div>
+        <strong>Asistente FixYa</strong>
+        <span>Responde preguntas frecuentes</span>
+      </div>
+      <button id="chatCloseBtn" aria-label="Cerrar chat">✕</button>
+    </div>
+    <div class="chat-body" id="chatBody"></div>
+    <div class="chat-quick" id="chatQuick"></div>
+    <form class="chat-input-row" id="chatForm">
+      <input type="text" id="chatInput" placeholder="Escribe tu pregunta..." autocomplete="off" />
+      <button type="submit" aria-label="Enviar">➤</button>
+    </form>
+  </div>
+  <button id="chatToggleBtn" aria-label="Abrir chat de ayuda">
+    <span id="chatIconOpen">💬</span>
+    <span id="chatIconClose" class="hidden">✕</span>
+  </button>
+</div>
+
+<script src="assets/js/chatbot.js"></script>
+<script type="module" src="assets/js/app.js"></script>
+</body>
+</html>
